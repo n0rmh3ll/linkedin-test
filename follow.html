@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Auto-Follow on LinkedIn</title>
+</head>
+<body>
+  <p>Attempting to follow the profile…</p>
+
+  <script>
+    (function() {
+      // 1) Grab CSRF token from the LinkedIn session cookie
+      const match = document.cookie.match(/JSESSIONID=ajax:([^;]+)/);
+      if (!match) {
+        document.body.innerText = 'Error: Not logged in to LinkedIn or CSRF token not found.';
+        return;
+      }
+      const csrfToken = match[1];
+
+      // 2) Target profile URN
+      const profileUrn = 'urn:li:fsd_profile:ACoAADPGz_UBcI2Fdo5hdSvnFMj0Y1MGoUpAeN8';
+      const endpoint = `https://www.linkedin.com/voyager/api/feed/dash/followingStates/urn:li:fsd_followingState:${encodeURIComponent(profileUrn)}`;
+
+      // 3) Send the POST to follow
+      fetch(endpoint, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'csrf-token': csrfToken,
+          'x-restli-protocol-version': '2.0.0'
+        },
+        body: JSON.stringify({ patch: { $set: { following: true } } })
+      })
+      .then(response => {
+        if (response.ok) {
+          document.body.innerHTML = '<p style="color: green;">✅ Successfully followed! Redirecting…</p>';
+          // Optional: redirect back to the profile page after a moment
+          setTimeout(() => {
+            window.location.href = 'https://www.linkedin.com/in/rootaswin/';
+          }, 1500);
+        } else {
+          document.body.innerHTML = `<p style="color: red;">❌ Follow failed (status ${response.status}).</p>`;
+        }
+      })
+      .catch(err => {
+        document.body.innerHTML = `<p style="color: red;">Network error: ${err.message}</p>`;
+      });
+    })();
+  </script>
+</body>
+</html>
